@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simha Cricket Club Season 8 - Auction</title>
+<style>
+body{margin:0;background:#07131e;color:#eef5fb;font-family:Arial,sans-serif}
+*{box-sizing:border-box} .wrap{max-width:1200px;margin:auto;padding:18px}
+header{background:#0d1d2a;border:1px solid #28455b;border-radius:14px;padding:20px;margin-bottom:14px}
+h1{margin:0;color:#f4c51f;letter-spacing:4px} .sub{color:#9db0c0;letter-spacing:3px;margin-top:8px}
+nav{display:flex;gap:5px;overflow:auto;background:#0d1d2a;border:1px solid #28455b;border-radius:12px;margin-bottom:14px}
+nav button{background:none;border:0;color:#aab9c6;padding:16px;font-weight:bold;cursor:pointer;white-space:nowrap}
+nav button.active{color:#f4c51f;border-bottom:3px solid #f4c51f}
+button{cursor:pointer} .draw{width:100%;padding:22px;background:#51308d;color:white;border:0;border-radius:12px;font-size:22px;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.card{background:#112536;border:1px solid #29485e;border-radius:12px;padding:16px}
+.stat b{font-size:26px} .gold{color:#f4c51f} .green{color:#35d483} .red{color:#ff665c}
+.panel{background:#0d1d2a;border:1px solid #28455b;border-radius:14px;padding:16px;margin:14px 0}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.player{background:#14293a;border:1px solid #2b4659;border-radius:10px;padding:13px}
+.status{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:6px;font-size:11px;font-weight:bold;background:#294052}
+.auction{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.current{min-height:240px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.name{font-size:38px;font-weight:bold;margin:12px 0} .price{font-size:42px;color:#f4c51f;font-weight:bold}
+.bidgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px} .bid{padding:18px;background:#173b55;color:white;border:0;border-radius:10px;font-weight:bold}
+.action{padding:14px;border:0;border-radius:9px;font-weight:bold} .sold{background:#17633f;color:white} .unsold{background:#6d3038;color:white}
+.teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .team h2{margin-top:0}
+table{width:100%;border-collapse:collapse} th,td{padding:10px;text-align:left;border-bottom:1px solid #294052}
+.small{color:#9db0c0} input{padding:10px;border-radius:8px;border:1px solid #34536a;background:#14293a;color:white;width:100%}
+@media(max-width:700px){.grid,.auction,.teamgrid{grid-template-columns:1fr 1fr}.auction{grid-template-columns:1fr}.name{font-size:28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>SIMHA CRICKET CLUB</h1><div class="sub">SEASON 8 OFFICIAL PLAYER AUCTION</div><div class="small" style="margin-top:10px">FINAL WORKING V3 • SOLD / UNSOLD LISTS FIXED • 2 TEAMS ONLY</div></header>
+<nav id="nav"></nav>
+<main id="app"></main>
+</div>
+<script>
+(function(){
+"use strict";
+var names=["Vijay", "Ravi (Suresh)", "Narsing", "Bharath", "Naidu", "UP", "Nasire", "Vamsi", "Surya", "Santash Photo", "Akhil Mantri", "Karan", "Kharthik", "Sai Charan", "Shyam", "Kalyan (P)", "Madhu", "Prasad", "Sai Rohit", "Ramana", "Yaseen (P)", "Vinay", "Alla Ganesh", "Kona Srinu"];
+var state={
+ teams:[{id:"A",name:"Team A",purse:15000,spent:0,players:[]},{id:"B",name:"Team B",purse:15000,spent:0,players:[]}],
+ players:names.map(function(n,i){return {id:i+1,name:n,status:"Available",team:null,price:0};}),
+ current:null, history:[], tab:"auction"
+};
+function team(id){for(var i=0;i<state.teams.length;i++)if(state.teams[i].id===id)return state.teams[i];}
+function money(n){return Number(n).toLocaleString("en-IN")+" Pts";}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function renderNav(){
+ var items=[["auction","🔨 AUCTION"],["players","👥 PLAYERS"],["teams","🏆 TEAMS"],["squads","📋 SQUADS"],["history","📜 HISTORY"]];
+ document.getElementById("nav").innerHTML=items.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]?'active':'')+'">'+x[1]+'</button>';}).join("");
+}
+function render(){
+ renderNav();
+ var a=document.getElementById("app");
+ if(state.tab==="auction") auction(a);
+ if(state.tab==="players") playersPage(a);
+ if(state.tab==="teams") teamsPage(a);
+ if(state.tab==="squads") squadsPage(a);
+ if(state.tab==="history") historyPage(a);
+}
+function auction(a){
+ var availableCount=state.players.filter(function(p){return p.status==="Available";}).length;
+ var unsoldCount=state.players.filter(function(p){return p.status==="Unsold";}).length;
+ var soldCount=state.players.filter(function(p){return p.status==="Sold";}).length;
+ var p=state.current;
+ var amount=p?(p.leading? p.bid+50:300):0;
+ a.innerHTML='<div class="grid">'+
+ '<button class="card stat" id="availableCount" style="text-align:left;color:inherit"><span class="small">AVAILABLE</span><br><b>'+availableCount+'</b></button>'+
+ '<button class="card stat" id="soldCount" style="text-align:left;color:inherit"><span class="small">SOLD — CLICK TO VIEW</span><br><b class="green">'+soldCount+'</b></button>'+
+ '<button class="card stat" id="unsoldCount" style="text-align:left;color:inherit"><span class="small">UNSOLD — CLICK TO VIEW</span><br><b class="red">'+unsoldCount+'</b></button>'+
+ '<button class="card stat" id="totalCount" style="text-align:left;color:inherit"><span class="small">TOTAL</span><br><b>'+state.players.length+'</b></button></div>'+
+ '<div class="panel"><button class="draw" id="draw">🎲 DRAW NEXT PLAYER</button></div>'+
+ '<div class="auction">'+
+ '<div class="panel current">'+(p?'<div class="small">ON THE BLOCK</div><div class="name">'+esc(p.player.name)+'</div><div class="price">'+money(p.bid)+'</div><div class="small">'+(p.leading?'LEADING: '+esc(team(p.leading).name):'BASE PRICE — 300 Pts')+'</div>':'<div class="small">AUCTION READY</div><div class="name">No Player Selected</div><div class="small">Click DRAW NEXT PLAYER</div>')+'</div>'+
+ '<div class="panel"><h2>BIDDING</h2>'+(p?
+ '<div class="bidgrid">'+state.teams.map(function(t){var can=t.id!==p.leading && t.purse>=amount && t.players.length<12;return '<button class="bid" data-bid="'+t.id+'" '+(can?'':'disabled')+'>'+esc(t.name)+'<br>'+money(amount)+'</button>';}).join("")+'</div>'+
+ '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'+
+ '<button class="action" id="once" '+(p.leading?'':'disabled')+'>⚠️ GOING ONCE</button>'+
+ '<button class="action" id="twice" '+(p.leading?'':'disabled')+'>⚠️ GOING TWICE</button>'+
+ '<button class="action sold" id="sold" '+(p.leading?'':'disabled')+'>✅ SOLD</button>'+
+ '<button class="action unsold" id="unsold">⛔ UNSOLD</button></div>':'<div class="small">First bid starts at 300 Pts. Bid increment is 50 Pts.</div>')+
+ '</div></div>';
+ document.getElementById("draw").onclick=draw;
+ document.getElementById("soldCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showSold").click()},0)};
+ document.getElementById("unsoldCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showUnsold").click()},0)};
+ document.getElementById("availableCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showAvailable").click()},0)};
+ document.getElementById("totalCount").onclick=function(){state.tab="players";render();};
+
+ document.querySelectorAll("[data-bid]").forEach(function(b){b.onclick=function(){bid(this.getAttribute("data-bid"));};});
+ if(p){document.getElementById("sold").onclick=sold;document.getElementById("unsold").onclick=unsold;}
+}
+function draw(){
+ if(state.current){alert("Finish the current player first.");return;}
+ var pool=state.players.filter(function(p){return p.status==="Available"||p.status==="Unsold";});
+ if(!pool.length){alert("All players have been completed.");return;}
+ var p=pool[Math.floor(Math.random()*pool.length)];
+ p.status="Available";
+ state.current={player:p,bid:300,leading:null};
+ render();
+}
+function bid(id){
+ var p=state.current,t=team(id);
+ if(!p||!t)return;
+ var amount=p.leading?p.bid+50:300;
+ if(id===p.leading||t.purse<amount||t.players.length>=12)return;
+ p.bid=amount;p.leading=id;render();
+}
+function sold(){
+ var a=state.current;if(!a||!a.leading)return;
+ var t=team(a.leading),p=a.player;
+ if(t.purse<a.bid||t.players.length>=12)return;
+ t.purse-=a.bid;t.spent+=a.bid;t.players.push(p.id);
+ p.status="Sold";p.team=t.id;p.price=a.bid;
+ state.history.unshift({player:p.name,team:t.name,price:a.bid,action:"SOLD",time:new Date().toLocaleString()});
+ state.current=null;render();
+}
+function unsold(){
+ var a=state.current;if(!a)return;
+ a.player.status="Unsold";
+ state.history.unshift({player:a.player.name,team:"—",price:0,action:"UNSOLD",time:new Date().toLocaleString()});
+ state.current=null;render();
+}
+function playersPage(a){
+ a.innerHTML='<div class="panel"><h2>👥 PLAYER LIST</h2>'+
+ '<div class="bidgrid" style="margin-bottom:12px">'+
+ '<button class="bid" id="showAll">📋 ALL PLAYERS</button>'+
+ '<button class="bid" id="showSold">✅ SOLD PLAYERS</button>'+
+ '<button class="bid" id="showUnsold">⛔ UNSOLD PLAYERS</button>'+
+ '<button class="bid" id="showAvailable">🟢 AVAILABLE PLAYERS</button></div>'+
+ '<input id="search" placeholder="Search player..."></div>'+
+ '<div class="panel"><div id="plist"></div></div>';
+
+ var mode="all";
+ function fill(){
+  var q=document.getElementById("search").value.toLowerCase();
+  var arr=state.players.filter(function(p){
+   var ok=mode==="all" ||
+          (mode==="sold"&&p.status==="Sold") ||
+          (mode==="unsold"&&p.status==="Unsold") ||
+          (mode==="available"&&p.status==="Available");
+   return ok && p.name.toLowerCase().indexOf(q)>=0;
+  });
+  document.getElementById("plist").innerHTML=
+   '<div class="small" style="margin-bottom:10px">Showing '+arr.length+' player(s)</div>'+
+   (arr.length?'<div class="players">'+arr.map(function(p){
+    return '<div class="player"><b>'+esc(p.name)+'</b><br>'+
+      '<span class="small">Base: 300 Pts</span><br>'+
+      '<span class="status">'+p.status+
+      (p.team?' • '+esc(team(p.team).name):'')+
+      (p.price?' • '+money(p.price):'')+
+      '</span></div>';
+   }).join("")+'</div>':'<div class="small">No players in this category.</div>');
+ }
+ document.getElementById("search").oninput=fill;
+ document.getElementById("showAll").onclick=function(){mode="all";fill()};
+ document.getElementById("showSold").onclick=function(){mode="sold";fill()};
+ document.getElementById("showUnsold").onclick=function(){mode="unsold";fill()};
+ document.getElementById("showAvailable").onclick=function(){mode="available";fill()};
+ fill();
+}
+function teamsPage(a){
+ a.innerHTML='<div class="teamgrid">'+state.teams.map(function(t){return '<div class="panel team"><h2>🏆 '+esc(t.name)+'</h2><div class="price">'+money(t.purse)+'</div><div class="small">Remaining Purse</div><p>Players: '+t.players.length+' / 12</p><p>Spent: '+money(t.spent)+'</p></div>';}).join("")+'</div>';
+}
+function squadsPage(a){
+ a.innerHTML='<div class="teamgrid">'+state.teams.map(function(t){return '<div class="panel team"><h2>'+esc(t.name)+'</h2>'+ (t.players.length?t.players.map(function(id){var p=state.players[id-1];return '<div class="player" style="margin:7px 0"><b>'+esc(p.name)+'</b> — '+money(p.price)+'</div>';}).join(""):'<div class="small">No players purchased.</div>')+'</div>';}).join("")+'</div>';
+}
+function historyPage(a){
+ a.innerHTML='<div class="panel"><h2>📜 AUCTION HISTORY</h2>'+(state.history.length?'<table><tr><th>Player</th><th>Action</th><th>Team</th><th>Price</th></tr>'+state.history.map(function(h){return '<tr><td>'+esc(h.player)+'</td><td>'+h.action+'</td><td>'+esc(h.team)+'</td><td>'+money(h.price)+'</td></tr>';}).join("")+'</table>':'<div class="small">No auction history yet.</div>')+'</div>';
+}
+document.getElementById("nav").onclick=function(e){var b=e.target.closest("[data-tab]");if(b){state.tab=b.getAttribute("data-tab");render();}};
+render();
+})();
+</script>
+</body>
+</html>
