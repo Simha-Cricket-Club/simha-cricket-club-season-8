@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simha Cricket Club Season 8 - Auction</title>
+<style>
+body{margin:0;background:#07131e;color:#eef5fb;font-family:Arial,sans-serif}
+*{box-sizing:border-box} .wrap{max-width:1200px;margin:auto;padding:18px}
+header{background:#0d1d2a;border:1px solid #28455b;border-radius:14px;padding:20px;margin-bottom:14px}
+h1{margin:0;color:#f4c51f;letter-spacing:4px} .sub{color:#9db0c0;letter-spacing:3px;margin-top:8px}
+nav{display:flex;gap:5px;overflow:auto;background:#0d1d2a;border:1px solid #28455b;border-radius:12px;margin-bottom:14px}
+nav button{background:none;border:0;color:#aab9c6;padding:16px;font-weight:bold;cursor:pointer;white-space:nowrap}
+nav button.active{color:#f4c51f;border-bottom:3px solid #f4c51f}
+button{cursor:pointer} .draw{width:100%;padding:22px;background:#51308d;color:white;border:0;border-radius:12px;font-size:22px;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.card{background:#112536;border:1px solid #29485e;border-radius:12px;padding:16px}
+.stat b{font-size:26px} .gold{color:#f4c51f} .green{color:#35d483} .red{color:#ff665c}
+.panel{background:#0d1d2a;border:1px solid #28455b;border-radius:14px;padding:16px;margin:14px 0}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.player{background:#14293a;border:1px solid #2b4659;border-radius:10px;padding:13px}
+.status{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:6px;font-size:11px;font-weight:bold;background:#294052}
+.auction{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.current{min-height:240px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.name{font-size:38px;font-weight:bold;margin:12px 0} .price{font-size:42px;color:#f4c51f;font-weight:bold}
+.bidgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px} .bid{padding:18px;background:#173b55;color:white;border:0;border-radius:10px;font-weight:bold}
+.action{padding:14px;border:0;border-radius:9px;font-weight:bold} .sold{background:#17633f;color:white} .unsold{background:#6d3038;color:white}
+.teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px} .team h2{margin-top:0}
+table{width:100%;border-collapse:collapse} th,td{padding:10px;text-align:left;border-bottom:1px solid #294052}
+.small{color:#9db0c0} input{padding:10px;border-radius:8px;border:1px solid #34536a;background:#14293a;color:white;width:100%}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.top-actions button{padding:11px 16px;border-radius:9px;border:1px solid #3a5669;font-weight:bold}.undoBtn{background:#0e4d3b;color:#55f0b0}.resetBtn{background:#5a1e2a;color:#ff8b86}.pdfBtn{background:#5a4211;color:#ffd65a}.disabled{opacity:.45;cursor:not-allowed!important}.pdf-report{display:none}.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modalbox{width:min(560px,100%);background:#0d1d2a;border:1px solid #34536a;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.45)}.modalbox h2{margin-top:0}.modal-actions{display:grid;grid-template-columns:1fr;gap:10px}.modal-actions button{padding:14px;border-radius:10px;border:1px solid #3a5669;font-weight:bold}.closeBtn{background:#203242;color:#fff}.note{font-size:13px;color:#9db0c0;line-height:1.5}
+@media print{body{background:white!important;color:#111!important}.wrap{display:none!important}.pdf-report{display:block!important;padding:28px;font-family:Arial,sans-serif}.pdf-report h1{color:#111;letter-spacing:2px}.pdf-report h2{margin-top:24px;border-bottom:1px solid #aaa;padding-bottom:6px}.pdf-report table{color:#111}.pdf-report th,.pdf-report td{border-bottom:1px solid #ccc}.pdf-meta{color:#444}.pdf-team{display:inline-block;vertical-align:top;width:46%;margin-right:3%;margin-bottom:18px}.pdf-box{border:1px solid #bbb;padding:12px;border-radius:8px}}
+@media(max-width:700px){.grid,.auction,.teamgrid{grid-template-columns:1fr 1fr}.auction{grid-template-columns:1fr}.name{font-size:28px}.top-actions{display:grid;grid-template-columns:1fr 1fr}.top-actions button{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>SIMHA CRICKET CLUB</h1><div class="sub">SEASON 8 OFFICIAL PLAYER AUCTION</div><div class="small" style="margin-top:10px">FINAL WORKING V21 • 25 PLAYERS • PROTECTED PLAYERS EXCLUDED FROM AVAILABLE • 2 TEAMS ONLY</div><div class="top-actions no-print"><button type="button" class="undoBtn" id="undoTop">↩ UNDO LAST ACTION</button><button type="button" class="resetBtn" id="resetTop">⟳ RESET AUCTION</button><button type="button" class="pdfBtn" id="pdfTop">📄 PDF DOWNLOADS</button></div></header>
+<nav id="nav"></nav>
+<main id="app"></main>
+</div><div id="pdfReport" class="pdf-report"></div>
+<div id="pdfModal" class="modal" aria-hidden="true"><div class="modalbox"><h2>📄 PDF DOWNLOADS</h2><div class="note" style="margin-bottom:12px">Download the complete auction result or an individual team squad PDF. You can generate these at any time; after the auction is complete they become your final records.</div><div class="modal-actions"><button class="pdfBtn" id="pdfFinal">📄 DOWNLOAD FINAL AUCTION PDF</button><button class="pdfBtn" id="pdfTeamA">🏆 DOWNLOAD SIMHA TEAM A PDF</button><button class="pdfBtn" id="pdfTeamB">🏆 DOWNLOAD SIMHA TEAM B PDF</button><button class="closeBtn" id="pdfClose">CLOSE</button></div></div></div>
+<script>
+(function(){
+"use strict";
+var playerDefs=[
+ {name:"Vijay",base:500},{name:"Ravi (Suresh)",base:1000},{name:"Narsing",base:500},{name:"Bharath",base:1000},{name:"Naidu",base:500},{name:"UP",base:1000},{name:"Nasire",base:1000},{name:"Vamsi",base:1000},{name:"Surya",base:1000},{name:"Santash Photo",base:500},{name:"Akhil",base:0,role:"retained",team:"A"},{name:"Karan",base:0,role:"retained",team:"B"},{name:"Kharthik",base:1000},{name:"Sai Charan",base:0,role:"owner",team:"B"},{name:"Shyam",base:500},{name:"Kalyan (P)",base:0,role:"owner",team:"A"},{name:"Madhu",base:500},{name:"Prasad",base:500},{name:"Sai Rohit",base:500},{name:"Ramana",base:500},{name:"Yaseen (P)",base:1000},{name:"Vinay",base:1000},{name:"Alla Ganesh",base:1000},{name:"Kona Srinu",base:1000},{name:"Rajendra",base:500}
+];
+var names=playerDefs.map(function(x){return x.name;});
+var state={
+ teams:[{id:"A",name:"SIMHA TEAM A",purse:15000,spent:0,players:[16,11]},{id:"B",name:"SIMHA TEAM B",purse:15000,spent:0,players:[14,12]}],
+ players:playerDefs.map(function(x,i){return {id:i+1,name:x.name,base:x.base,status:x.role?"Protected":"Available",team:x.team||null,price:0,role:x.role||null};}).map(function(p){if(p.role){p.status="Protected";}return p;}),
+ current:null, history:[], tab:"auction"
+};
+var undoStack=[];
+var STORAGE_KEY="scc-season8-auction-v10";
+var UNDO_KEY="scc-season8-auction-undo-v10";
+function cloneState(){return JSON.parse(JSON.stringify(state));}
+function persist(){
+ try{
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  localStorage.setItem(UNDO_KEY,JSON.stringify(undoStack));
+ }catch(e){}
+}
+function restore(){
+ try{
+  var raw=localStorage.getItem(STORAGE_KEY);
+  if(raw){var saved=JSON.parse(raw);if(saved&&saved.players&&saved.teams){state=saved;}}
+  var uraw=localStorage.getItem(UNDO_KEY);
+  if(uraw){var usaved=JSON.parse(uraw);if(Array.isArray(usaved)){undoStack=usaved.slice(-100);}}
+ }catch(e){}
+ if(!state.players || state.players.length!==25 || state.teams.some(function(t){return t.name!=="SIMHA TEAM A" && t.name!=="SIMHA TEAM B";})){ state=freshState(); undoStack=[]; persist(); }
+}
+function normalizeConfig(){
+ // Always enforce the current Season 8 roster/config after older versions are loaded.
+ var byName={}; playerDefs.forEach(function(d){byName[d.name]=d;});
+ state.players.forEach(function(p){ if(byName[p.name]){p.base=byName[p.name].base;p.role=byName[p.name].role||null;} });
+ var extra=playerDefs.filter(function(d){return !state.players.some(function(p){return p.name===d.name;});});
+ extra.forEach(function(d){state.players.push({id:state.players.length+1,name:d.name,base:d.base,status:"Available",team:null,price:0,role:d.role||null});});
+ state.players=state.players.map(function(p,i){p.id=i+1;return p;});
+ state.teams=[{id:"A",name:"SIMHA TEAM A",purse:15000,spent:0,players:[]},{id:"B",name:"SIMHA TEAM B",purse:15000,spent:0,players:[]}];
+ ["Kalyan (P)","Akhil"].forEach(function(n){var p=state.players.find(function(x){return x.name===n;});if(p){p.status="Protected";p.team="A";p.price=0;p.role=(n==="Kalyan (P)"?"owner":"retained");state.teams[0].players.push(p.id);}});
+ ["Sai Charan","Karan"].forEach(function(n){var p=state.players.find(function(x){return x.name===n;});if(p){p.status="Protected";p.team="B";p.price=0;p.role=(n==="Sai Charan"?"owner":"retained");state.teams[1].players.push(p.id);}});
+}
+
+function saveUndo(){
+ undoStack.push(cloneState());
+ if(undoStack.length>100)undoStack.shift();
+ persist();
+}
+function undoLast(){
+ if(!undoStack.length){alert("Nothing to undo yet.");return;}
+ state=undoStack.pop();
+ render();
+}
+function freshState(){
+ var players=playerDefs.map(function(x,i){
+   return {id:i+1,name:x.name,base:x.base,status:x.role?"Protected":"Available",team:x.team||null,price:0,role:x.role||null};
+ });
+ return {
+  teams:[
+   {id:"A",name:"SIMHA TEAM A",purse:15000,spent:0,players:[16,11]},
+   {id:"B",name:"SIMHA TEAM B",purse:15000,spent:0,players:[14,12]}
+  ],
+  players:players,
+  current:null,history:[],tab:"auction"
+ };
+}
+function resetAuction(){
+  // HARD RESET: no confirmation, no undo snapshot, and no old saved auction data.
+  // The next screen is a completely fresh Season 8 auction.
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(UNDO_KEY);
+  }catch(e){}
+  undoStack=[];
+  state=freshState();
+  try{
+    // Save only the brand-new state so refresh also stays fresh.
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    localStorage.setItem(UNDO_KEY,'[]');
+  }catch(e){}
+  render();
+  alert('✅ AUCTION RESET COMPLETE\n\nFresh start:\n• 21 players AVAILABLE + 4 protected (not for draw)\n• SIMHA TEAM A: 15,000 Pts\n• SIMHA TEAM B: 15,000 Pts\n• Sold: 0\n• Unsold: 0\n• History: cleared\n• Previous auction data: cleared');
+}
+
+function openPdfModal(){document.getElementById("pdfModal").classList.add("show");document.getElementById("pdfModal").setAttribute("aria-hidden","false");}
+function closePdfModal(){document.getElementById("pdfModal").classList.remove("show");document.getElementById("pdfModal").setAttribute("aria-hidden","true");}
+function pdfReady(){return true;}
+function safePdfText(s){return String(s==null?'':s).replace(/[^\x20-\x7E]/g,'?');}
+function pdfEsc(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');}
+function makeSimplePdf(linesByPage){
+  var objects=[];
+  function addObj(x){objects.push(x);return objects.length;}
+  var pagesId=addObj('');
+  var fontId=addObj('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  var pageIds=[];
+  linesByPage.forEach(function(lines){
+    var content='BT\n/F1 9 Tf\n14 280 Td\n';
+    lines.forEach(function(line,i){
+      if(i>0) content+='0 -7 Td\n';
+      content+='('+pdfEsc(line)+') Tj\n';
+    });
+    content+='ET';
+    var contentId=addObj('<< /Length '+content.length+' >>\nstream\n'+content+'\nendstream');
+    var pageId=addObj('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+fontId+' 0 R >> >> /Contents '+contentId+' 0 R >>');
+    pageIds.push(pageId);
+  });
+  objects[pagesId-1]='<< /Type /Pages /Kids ['+pageIds.map(function(id){return id+' 0 R';}).join(' ') +'] /Count '+pageIds.length+' >>';
+  var catalogId=addObj('<< /Type /Catalog /Pages '+pagesId+' 0 R >>');
+  var pdf='%PDF-1.4\n', offsets=[0];
+  objects.forEach(function(obj,i){offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});
+  var xref=pdf.length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n';
+  for(var i=1;i<offsets.length;i++) pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+='trailer\n<< /Size '+(objects.length+1)+' /Root '+catalogId+' 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+  return pdf;
+}
+function downloadPdfText(pdfText,filename){
+  var bytes=new Uint8Array(pdfText.length);
+  for(var i=0;i<pdfText.length;i++){bytes[i]=pdfText.charCodeAt(i)&255;}
+  var blob=new Blob([bytes],{type:'application/pdf'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download=filename;
+  a.rel='noopener';
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){
+    if(a.parentNode)a.parentNode.removeChild(a);
+    URL.revokeObjectURL(url);
+  },2000);
+}
+function chunkPdfLines(lines){var pages=[],page=[];lines.forEach(function(line){if(page.length>=38){pages.push(page);page=[];}page.push(line);});if(page.length)pages.push(page);return pages;}
+function finalPdfLines(){
+  var sold=state.players.filter(function(p){return p.status==='Sold';}),unsold=state.players.filter(function(p){return p.status==='Unsold';}),available=state.players.filter(function(p){return p.status==='Available';});
+  var lines=['SIMHA CRICKET CLUB','SEASON 8 OFFICIAL PLAYER AUCTION','FINAL AUCTION REPORT','Generated: '+new Date().toLocaleString(),'','Total Players: '+state.players.length+'  Sold: '+sold.length+'  Unsold: '+unsold.length+'  Available: '+available.length,'',' #  Player                         Base Price  Status   Team                 Final Price','------------------------------------------------------------------------------------------------'];
+  state.players.forEach(function(p,i){var nm=safePdfText(p.name).slice(0,28);lines.push(String(i+1).padStart(2,' ')+'  '+nm.padEnd(29,' ')+(''+(p.base?money(p.base):'N/A')).padEnd(12,' ')+p.status.padEnd(9,' ')+(p.team?team(p.team).name:'-').slice(0,20).padEnd(21,' ')+(p.price?money(p.price):'-'));});
+  lines.push('','TEAM SUMMARIES');
+  state.teams.forEach(function(t){lines.push(t.name+' | Players: '+t.players.length+'/13 | Spent: '+money(t.spent)+' | Remaining: '+money(t.purse));});
+  return lines;
+}
+function teamPdfLines(teamId){
+  var t=team(teamId),teamPlayers=t.players.map(function(id){return state.players[id-1];}).filter(Boolean);
+  var owner=t.id==='A'?'Kalyan (P)':'Sai Charan';
+  var lines=['SIMHA CRICKET CLUB','SEASON 8 OFFICIAL PLAYER AUCTION',t.name+' - FINAL TEAM AUCTION REPORT','Generated: '+new Date().toLocaleString(),'Team Owner: '+owner,'Squad: '+teamPlayers.length+' / 13','Spent: '+money(t.spent)+'   Remaining Purse: '+money(t.purse),'',' #  Player                         Base Price  Status      Final Price','------------------------------------------------------------------------------------------------'];
+  var protectedNames={'Akhil':'RETAINED','Kalyan (P)':'OWNER','Karan':'RETAINED','Sai Charan':'OWNER'};
+  teamPlayers.forEach(function(p,i){var status=protectedNames[p.name]||p.status;lines.push(String(i+1).padStart(2,' ')+'  '+safePdfText(p.name).slice(0,28).padEnd(29,' ')+(p.base?money(p.base):'N/A').padEnd(12,' ')+status.padEnd(12,' ')+(protectedNames[p.name]?'-':(p.price?money(p.price):'-')));});
+  lines.push('','TEAM SUMMARY','Maximum Players: 13','Players in Squad: '+teamPlayers.length,'Total Spent: '+money(t.spent),'Remaining Purse: '+money(t.purse));
+  return lines;
+}
+function downloadFinalPdf(){
+  try{downloadPdfText(makeSimplePdf(chunkPdfLines(finalPdfLines())),'Simha_Cricket_Club_Season_8_Final_Auction.pdf');closePdfModal();}
+  catch(e){console.error(e);alert('PDF download failed: '+e.message);}
+}
+function downloadTeamPdf(teamId){
+  try{var t=team(teamId);if(!t)return;downloadPdfText(makeSimplePdf(chunkPdfLines(teamPdfLines(teamId))),'Simha_Cricket_Club_Season_8_'+t.name.replace(/\s+/g,'_')+'_Final_Team_Report.pdf');closePdfModal();}
+  catch(e){console.error(e);alert('PDF download failed: '+e.message);}
+}
+function buildPdfReport(){openPdfModal();}
+function team(id){for(var i=0;i<state.teams.length;i++)if(state.teams[i].id===id)return state.teams[i];}
+function money(n){return Number(n).toLocaleString("en-IN")+" Pts";}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function renderNav(){
+ var items=[["auction","🔨 AUCTION"],["players","👥 PLAYERS"],["teams","🏆 TEAMS"],["squads","📋 SQUADS"],["history","📜 HISTORY"]];
+ document.getElementById("nav").innerHTML=items.map(function(x){return '<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]?'active':'')+'">'+x[1]+'</button>';}).join("");
+}
+function render(){
+ persist();
+ renderNav();
+ var a=document.getElementById("app");
+ if(state.tab==="auction") auction(a);
+ if(state.tab==="players") playersPage(a);
+ if(state.tab==="teams") teamsPage(a);
+ if(state.tab==="squads") squadsPage(a);
+ if(state.tab==="history") historyPage(a);
+}
+function auction(a){
+ var unsoldCount=state.players.filter(function(p){return p.status==="Unsold";}).length;
+ var soldCount=state.players.filter(function(p){return p.status==="Sold";}).length;
+ // AVAILABLE means players not yet finalized as SOLD or UNSOLD. The player currently on the block remains AVAILABLE.
+ var availableCount=state.players.filter(function(p){return p.status==="Available";}).length;
+ var p=state.current;
+ var amount=p?(p.leading? p.bid+50:(p.player.base||300)):0;
+ a.innerHTML='<div class="grid">'+
+ '<button class="card stat" id="availableCount" style="text-align:left;color:inherit"><span class="small">AVAILABLE (AUCTION)</span><br><b>'+availableCount+'</b></button>'+
+ '<button class="card stat" id="soldCount" style="text-align:left;color:inherit"><span class="small">SOLD — CLICK TO VIEW</span><br><b class="green">'+soldCount+'</b></button>'+
+ '<button class="card stat" id="unsoldCount" style="text-align:left;color:inherit"><span class="small">UNSOLD — CLICK TO VIEW</span><br><b class="red">'+unsoldCount+'</b></button>'+
+ '<button class="card stat" id="totalCount" style="text-align:left;color:inherit"><span class="small">TOTAL</span><br><b>'+state.players.length+'</b></button></div>'+
+ '<div class="panel"><button class="draw" id="draw">🎲 DRAW NEXT PLAYER</button></div>'+
+ '<div class="auction">'+
+ '<div class="panel current">'+(p?'<div class="small">ON THE BLOCK</div><div class="name">'+esc(p.player.name)+'</div><div class="price">'+money(p.bid)+'</div><div class="small">'+(p.leading?'LEADING: '+esc(team(p.leading).name):'BASE PRICE — '+money(p.player.base||300))+'</div>':'<div class="small">AUCTION READY</div><div class="name">No Player Selected</div><div class="small">Click DRAW NEXT PLAYER</div>')+'</div>'+
+ '<div class="panel"><h2>BIDDING</h2>'+(p?
+ '<div class="bidgrid">'+state.teams.map(function(t){var can=t.id!==p.leading && t.purse>=amount && t.players.length<13;return '<button class="bid" data-bid="'+t.id+'" '+(can?'':'disabled')+'>'+esc(t.name)+'<br>'+money(amount)+'</button>';}).join("")+'</div>'+
+ '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">'+
+ '<button class="action" id="once" '+(p.leading?'':'disabled')+'>⚠️ GOING ONCE</button>'+
+ '<button class="action" id="twice" '+(p.leading?'':'disabled')+'>⚠️ GOING TWICE</button>'+
+ '<button class="action sold" id="sold" '+(p.leading?'':'disabled')+'>✅ SOLD</button>'+
+ '<button class="action unsold" id="unsold">⛔ UNSOLD</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="action undoBtn" id="undoAuction">↩ UNDO LAST ACTION</button><button class="action resetBtn" id="resetAuction">⟳ RESET AUCTION</button></div>':'<div class="small">First bid starts at the player base price. Bid increment is 50 Pts.</div>')+
+ '</div></div>';
+ document.getElementById("draw").onclick=draw;
+ if(document.getElementById("undoAuction"))document.getElementById("undoAuction").onclick=undoLast;
+ if(document.getElementById("resetAuction"))document.getElementById("resetAuction").onclick=resetAuction;
+
+ document.getElementById("soldCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showSold").click()},0)};
+ document.getElementById("unsoldCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showUnsold").click()},0)};
+ document.getElementById("availableCount").onclick=function(){state.tab="players";render();setTimeout(function(){document.getElementById("showAvailable").click()},0)};
+ document.getElementById("totalCount").onclick=function(){state.tab="players";render();};
+
+ document.querySelectorAll("[data-bid]").forEach(function(b){b.onclick=function(){bid(this.getAttribute("data-bid"));};});
+ if(p){document.getElementById("sold").onclick=sold;document.getElementById("unsold").onclick=unsold;}
+}
+function draw(){
+ if(state.current){alert("Finish the current player first.");return;}
+ var PROTECTED_PLAYERS=["Kalyan (P)","Akhil","Sai Charan","Karan"];
+ var pool=state.players.filter(function(p){return (p.status==="Available"||p.status==="Unsold") && PROTECTED_PLAYERS.indexOf(p.name)===-1;});
+ if(!pool.length){alert("All players have been completed.");return;}
+ saveUndo();
+ var p=pool[Math.floor(Math.random()*pool.length)];
+ p.status="Available";
+ state.current={player:p,bid:p.base||300,leading:null};
+ render();
+}
+function bid(id){
+ var p=state.current,t=team(id);
+ if(!p||!t)return;
+ var amount=p.leading?p.bid+50:(p.player.base||300);
+ if(id===p.leading||t.purse<amount||t.players.length>=13)return;
+ saveUndo();
+ p.bid=amount;p.leading=id;render();
+}
+function sold(){
+ var a=state.current;if(!a||!a.leading)return;
+ var t=team(a.leading),p=a.player;
+ if(t.purse<a.bid||t.players.length>=13)return;
+ saveUndo();
+ t.purse-=a.bid;t.spent+=a.bid;t.players.push(p.id);
+ p.status="Sold";p.team=t.id;p.price=a.bid;
+ state.history.unshift({player:p.name,team:t.name,price:a.bid,action:"SOLD",time:new Date().toLocaleString()});
+ state.current=null;render();
+}
+function unsold(){
+ var a=state.current;if(!a)return;
+ saveUndo();
+ a.player.status="Unsold";
+ state.history.unshift({player:a.player.name,team:"—",price:0,action:"UNSOLD",time:new Date().toLocaleString()});
+ state.current=null;render();
+}
+function playersPage(a){
+ a.innerHTML='<div class="panel"><h2>👥 PLAYER LIST</h2>'+
+ '<div class="bidgrid" style="margin-bottom:12px">'+
+ '<button class="bid" id="showAll">📋 ALL PLAYERS</button>'+
+ '<button class="bid" id="showSold">✅ SOLD PLAYERS</button>'+
+ '<button class="bid" id="showUnsold">⛔ UNSOLD PLAYERS</button>'+
+ '<button class="bid" id="showAvailable">🟢 AVAILABLE PLAYERS</button></div>'+
+ '<input id="search" placeholder="Search player..."></div>'+
+ '<div class="panel"><div id="plist"></div></div>';
+
+ var mode="all";
+ function fill(){
+  var q=document.getElementById("search").value.toLowerCase();
+  var arr=state.players.filter(function(p){
+   var ok=mode==="all" ||
+          (mode==="sold"&&p.status==="Sold") ||
+          (mode==="unsold"&&p.status==="Unsold") ||
+          (mode==="available"&&p.status==="Available");
+   return ok && p.name.toLowerCase().indexOf(q)>=0;
+  });
+  document.getElementById("plist").innerHTML=
+   '<div class="small" style="margin-bottom:10px">Showing '+arr.length+' player(s)</div>'+
+   (arr.length?'<div class="players">'+arr.map(function(p){
+    return '<div class="player"><b>'+esc(p.name)+'</b><br>'+
+      '<span class="small">Base: '+(p.base?money(p.base):'N/A')+'</span><br>'+
+      (p.role?'<span style="display:inline-block;margin:3px 0;padding:3px 7px;border-radius:10px;background:#d6a52b;color:#111;font-weight:800;font-size:.7rem">'+(p.role==='owner'?'👑 OWNER':'⭐ RETAINED')+'</span><br>':'')+
+      '<span class="status">'+p.status+
+      (p.team?' • '+esc(team(p.team).name):'')+
+      (p.price?' • '+money(p.price):'')+
+      '</span></div>';
+   }).join("")+'</div>':'<div class="small">No players in this category.</div>');
+ }
+ document.getElementById("search").oninput=fill;
+ document.getElementById("showAll").onclick=function(){mode="all";fill()};
+ document.getElementById("showSold").onclick=function(){mode="sold";fill()};
+ document.getElementById("showUnsold").onclick=function(){mode="unsold";fill()};
+ document.getElementById("showAvailable").onclick=function(){mode="available";fill()};
+ fill();
+}
+function teamsPage(a){
+ a.innerHTML='<div class="teamgrid">'+state.teams.map(function(t){return '<div class="panel team"><h2>🏆 '+esc(t.name)+'</h2><div class="price">'+money(t.purse)+'</div><div class="small">Remaining Purse</div><p>Players: '+t.players.length+' / 13</p><p>Spent: '+money(t.spent)+'</p></div>';}).join("")+'</div>';
+}
+function squadsPage(a){
+ a.innerHTML='<div class="panel"><h2>📄 PDF DOWNLOADS</h2><div class="bidgrid"><button class="action pdfBtn" id="squadFinalPdf">FINAL AUCTION PDF</button><button class="action pdfBtn" id="squadTeamA">TEAM A PDF</button><button class="action pdfBtn" id="squadTeamB">TEAM B PDF</button></div></div><div class="teamgrid">'+state.teams.map(function(t){return '<div class="panel team"><h2>'+esc(t.name)+'</h2>'+ (t.players.length?t.players.map(function(id){var p=state.players[id-1];return '<div class="player" style="margin:7px 0"><b>'+esc(p.name)+'</b> — '+money(p.price)+'</div>';}).join(""):'<div class="small">No players purchased.</div>')+'</div>';}).join("")+'</div>';
+ document.getElementById("squadFinalPdf").onclick=downloadFinalPdf;
+ document.getElementById("squadTeamA").onclick=function(){downloadTeamPdf("A")};
+ document.getElementById("squadTeamB").onclick=function(){downloadTeamPdf("B")};
+}
+function historyPage(a){
+ a.innerHTML='<div class="panel"><h2>📜 AUCTION HISTORY</h2>'+(state.history.length?'<table><tr><th>Player</th><th>Action</th><th>Team</th><th>Price</th></tr>'+state.history.map(function(h){return '<tr><td>'+esc(h.player)+'</td><td>'+h.action+'</td><td>'+esc(h.team)+'</td><td>'+money(h.price)+'</td></tr>';}).join("")+'</table>':'<div class="small">No auction history yet.</div>')+'</div>';
+}
+// Global click fallback: works even after the auction panel is re-rendered.
+document.addEventListener("click",function(e){
+ var resetBtn=e.target.closest("#resetTop,#resetAuction");
+ if(resetBtn){e.preventDefault();e.stopPropagation();resetAuction();return;}
+ var undoBtn=e.target.closest("#undoTop,#undoAuction");
+ if(undoBtn){e.preventDefault();e.stopPropagation();undoLast();return;}
+});
+
+function bindGlobalButtons(){
+ var nav=document.getElementById("nav");
+ var undo=document.getElementById("undoTop");
+ var reset=document.getElementById("resetTop");
+ var pdf=document.getElementById("pdfTop");
+ if(nav)nav.addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b){state.tab=b.getAttribute("data-tab");render();}});
+ if(pdf)pdf.addEventListener("click",function(e){e.preventDefault();buildPdfReport();});
+ document.getElementById("pdfFinal").addEventListener("click",downloadFinalPdf);
+ document.getElementById("pdfTeamA").addEventListener("click",function(){downloadTeamPdf("A")});
+ document.getElementById("pdfTeamB").addEventListener("click",function(){downloadTeamPdf("B")});
+ document.getElementById("pdfClose").addEventListener("click",closePdfModal);
+ document.getElementById("pdfModal").addEventListener("click",function(e){if(e.target===this)closePdfModal();});
+}
+restore();
+bindGlobalButtons();
+render();
+})();
+</script>
+</body>
+</html>
